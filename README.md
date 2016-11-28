@@ -21,6 +21,7 @@ mv bootapp.phar /usr/local/bin/bootapp
 git clone https://github.com/yejune/php-skeleton project
 cd project
 bootapp up
+bootapp task composer install
 ```
 
 ### File structure
