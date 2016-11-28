@@ -30,7 +30,7 @@
     "paths": {
         "/": {
             "get": {
-                "description": "user login",
+                "description": "hello world",
                 "tags": [
                     "auth"
                 ],
@@ -44,11 +44,25 @@
         },
         "/info": {
             "get": {
-                "description": "user login",
+                "description": "php info",
                 "tags": [
-                    "auth"
+                    "info"
                 ],
                 "operationId": "\\App\\Controllers\\Index->info",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/readme": {
+            "get": {
+                "description": "readme",
+                "tags": [
+                    "info"
+                ],
+                "operationId": "\\App\\Controllers\\Index->readme",
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -168,93 +182,6 @@
                     "auth"
                 ],
                 "operationId": "\\App\\Controllers\\Auth\\Validate->index",
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            }
-        },
-        "/pet": {
-            "post": {
-                "tags": [
-                    "pet"
-                ],
-                "summary": "Add a new pet to the store",
-                "description": "test",
-                "operationId": "\\App\\Controllers\\Index->pet",
-                "consumes": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "produces": [
-                    "application/json",
-                    "application/xml"
-                ],
-                "parameters": [{
-                    "in": "body",
-                    "name": "body",
-                    "description": "Pet object that needs to be added to the store",
-                    "required": true,
-                    "schema": {
-                        "type": "object",
-                        "required": [
-                            "name",
-                            "photoUrls"
-                        ],
-                        "properties": {
-                            "id": {
-                                "type": "integer",
-                                "format": "int64"
-                            },
-                            "category": {
-                                "type": "object",
-                                "properties": {
-                                    "id": {
-                                        "type": "integer",
-                                        "format": "int64"
-                                    },
-                                    "name": {
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "name": {
-                                "type": "string",
-                                "example": "doggie"
-                            },
-                            "photoUrls": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "tags": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "required": [
-                                        "id",
-                                        "name"
-                                    ],
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer",
-                                            "format": "int64"
-                                        },
-                                        "name": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": {
-                                "type": "string",
-                                "description": "pet status in the store"
-                            }
-                        }
-                    }
-                }],
                 "responses": {
                     "200": {
                         "description": "Success"

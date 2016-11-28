@@ -1,27 +1,30 @@
-## skeleton
+# php skeleton
 
-Phalcon Micro Mvc Framework의 Wrapper이다.
+Phalcon Micro Mvc Framework Wrapper.
 
+### Environment
+macOS, php7, Phalcon 3.0.x, docker.
 
-### 환경
-macOS, php7, Phalcon 3.0.x, docker 사용.
+### Require Bootapp
 
-### bootapp 필요
-macOS에서 docker 기반 개발에 도움을 줌.
+Helps docker-based development in macOS.
+
 ```
 wget https://raw.githubusercontent.com/yejune/bootapp/master/bootapp.phar
 chmod +x bootapp.phar
 mv bootapp.phar /usr/local/bin/bootapp
 ```
 
-### 설치
+### install
+
 ```
-git clone https://github.com/yejune/skeleton project
+git clone https://github.com/yejune/php-skeleton project
 cd project
 bootapp up
 ```
 
-### 구조
+### File structure
+
 ```
 home/
     app/
@@ -44,12 +47,9 @@ home/
     routes.yml
 ```
 
-> PSR-1, PSR-2를 따라 클래스 이름은 반드시 `Studlycaps`
-
-> PSR-4 Autoloader 규칙을 따르며 네임스페이스 \App는 /home/app 폴더에 대응.
-
-> 모든 요청을 index.php로 전달.
-
-> route.yml  route 설정 파일
-
-> Bootapp.yml docker config
+-   Follow PSR rules
+    -   php-cs-fixer.settings
+-   Pass all requests to index.php
+-   Namespace \App corresponds to /home/app folder
+-   Route and validate are defined in app/specs/swagger.json
+-   Bootapp.yml bootapp config

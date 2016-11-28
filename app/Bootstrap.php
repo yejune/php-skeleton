@@ -17,10 +17,7 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
 
         $app->notFound(
             function () use ($app) {
-                $app->response->setStatusCode(404, 'Not Found');
-                $app->response->setContent('404 Page or File Not Found!');
-
-                return $app->response;
+                throw new \App\Exception('404 Page or File Not Found!', 404);
             }
         );
     }

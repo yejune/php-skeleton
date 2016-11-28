@@ -14,6 +14,12 @@ trait Template
             $define = ['layout' => $define];
         }
 
+        if (true === isset($this->title)) {
+            $assign['title'] = $this->title;
+        } else {
+            $assign['title'] = '';
+        }
+
         $template = $this->template;
         $template->define($define);
         $template->assign($assign);

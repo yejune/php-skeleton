@@ -18,7 +18,7 @@ class Index extends \App\Controllers
 
         return $response->setContent(
             $this->show([
-                'layout'   => './layout/normal.tpl',
+                'layout'   => './layout/bootstrap.tpl',
                 'contents' => './contents/main.tpl',
             ], $assign)
         );
@@ -29,7 +29,23 @@ class Index extends \App\Controllers
         phpinfo();
     }
 
-    public function pet()
+    public function readme()
     {
+        $markdownText = file_get_contents(__BASE__.'/README.md');
+        $html         = (new \Parsedown)->text($markdownText);
+
+        $request  = $this->request;
+        $response = $this->response;
+
+        $assign   = [
+            'message'  => $html,
+        ];
+
+        return $response->setContent(
+            $this->show([
+                'layout'   => './layout/bootstrap.tpl',
+                'contents' => './contents/main.tpl',
+            ], $assign)
+        );
     }
 }
