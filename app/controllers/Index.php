@@ -13,7 +13,7 @@ class Index extends \App\Controllers
         $response = $this->response;
 
         $assign   = [
-            'message'  => 'hello world',
+            'message'  => 'Hello World!',
         ];
 
         return $response->setContent(

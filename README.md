@@ -28,28 +28,28 @@ bootapp up
 ```
 home/
     app/
-        controllers/
-        helpers/
-        middlewares/
-        models/
-        specs/
-        traits/
-        views/
+        Controllers/
+        Helpers/
+        Middlewares/
+        Models/
+        Specs/
+        Traits/
+        Views/
     public/
         css/
         img/
         js/
         .htaccess
         index.php
+    .php_cs
     Bootfile.yml
-    composer.jsonphp-cs-fixer.settings
+    composer.json
     README.md
-    routes.yml
 ```
 
 -   Follow PSR rules
-    -   php-cs-fixer.settings
+    -   .php_cs
 -   Pass all requests to index.php
 -   Namespace \App corresponds to /home/app folder
--   Route and validate are defined in app/specs/swagger.json
+-   Route and validate are defined in app/Specs/swagger.json
 -   Bootapp.yml bootapp config

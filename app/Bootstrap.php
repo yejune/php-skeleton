@@ -91,16 +91,25 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
                     $tpl->compileCheck = false;
                     break;
                 case 'staging':
-                    $tpl->compileCheck = true;
+                    $tpl->compileCheck = false;
                     break;
                 default:
                     $tpl->compileCheck = 'dev';
             }
 
             $tpl->compileRoot  = __BASE__.DIRECTORY_SEPARATOR.'.template';
-            $tpl->templateRoot = __BASE__.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'views';
+            $tpl->templateRoot = __BASE__.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'Views';
 
             return $tpl;
+        });
+    }
+
+    public function initAuth()
+    {
+        $this->di->setShared('auth', function () {
+            $jwt = new \Firebase\JWT\JWT;
+
+            return $jwt;
         });
     }
 
@@ -122,20 +131,57 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
         }
     }
 
-    public function initAuth()
+    public function initEventsManager()
     {
-        $this->di->setShared('auth', function () {
-            $jwt = new \Firebase\JWT\JWT;
-
-            return $jwt;
+        $this->di->setShared('eventsManager', function () {
+            return new \Phalcon\Events\Manager();
         });
+    }
+
+    public function initDbProfiler()
+    {
+        $this->di->setShared('dbProfiler', function () {
+            return new \Phalcon\Db\Profiler();
+        });
+    }
+
+    public function initDebug()
+    {
+        $debug = (bool)(getenv('DEBUG'));
+        if ($debug) {
+            $this->debug = true;
+            include_once __BASE__.'/app/Helpers/Debug.php';
+        }
+    }
+
+    public function dbProfiler()
+    {
+        $this->initEventsManager();
+        $this->initDbProfiler();
+
+        $eventsManager = $this->getDi('eventsManager');
+        $eventsManager->attach('db', function ($event, $connection) {
+            $profiler = $this->di['dbProfiler'];
+            if ($event->getType() == 'beforeQuery') {
+                $profiler->startProfile($connection->getSQLStatement(), $connection->getSQLVariables(), $connection->getSQLBindTypes());
+            }
+
+            if ($event->getType() == 'afterQuery') {
+                $profiler->stopProfile();
+            }
+        });
+
+        $dbNames = array_keys($this->getDbConfig());
+        foreach ($dbNames as $name) {
+            \Peanut\Phalcon\Pdo\Mysql::name($name)->setEventsManager($eventsManager);
+        }
     }
 
     protected function initRouter()
     {
         $routes           = [];
         $routes['before'] = '\App\Middlewares\Validator->handle';
-        $swagger          = decode_file(__BASE__.'/app/specs/swagger.json');
+        $swagger          = decode_file(__BASE__.'/app/Specs/swagger.json');
 
         foreach ($swagger['paths'] as $path => $methods) {
             foreach ($methods as $method => $info) {
@@ -168,13 +214,12 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
      */
     private function getDbConfig()
     {
-        $dbUrls = json_decode(getenv('DATABASE_URL'), true);
-        if (0 === count($dbUrls)) {
-            throw new \Exception('Check DB URL');
+        $dbConfig           = [];
+        if ($master = getenv('MASTER_DATABASE_URL')) {
+            $dbConfig['master'] = $this->dsnParser($master);
         }
-        $dbConfig = [];
-        foreach ($dbUrls as $server => $url) {
-            $dbConfig[$server] = $this->dsnParser($url);
+        if ($slave = getenv('SLAVE_DATABASE_URL')) {
+            $dbConfig['slave'] = $this->dsnParser($slave);
         }
 
         return $dbConfig;
@@ -197,51 +242,5 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
             'username' => $user,
             'password' => $password,
         ];
-    }
-
-    public function initEventsManager()
-    {
-        $this->di->setShared('eventsManager', function () {
-            return new \Phalcon\Events\Manager();
-        });
-    }
-
-    public function initDbProfiler()
-    {
-        $this->di->setShared('dbProfiler', function () {
-            return new \Phalcon\Db\Profiler();
-        });
-    }
-
-    public function initDebug()
-    {
-        $debug = (bool)(getenv('DEBUG'));
-        if ($debug) {
-            $this->debug = true;
-            include_once __BASE__.'/app/helpers/debug.php';
-        }
-    }
-
-    public function dbProfiler()
-    {
-        $this->initEventsManager();
-        $this->initDbProfiler();
-
-        $eventsManager = $this->getDi('eventsManager');
-        $eventsManager->attach('db', function ($event, $connection) {
-            $profiler = $this->di['dbProfiler'];
-            if ($event->getType() == 'beforeQuery') {
-                $profiler->startProfile($connection->getSQLStatement(), $connection->getSQLVariables(), $connection->getSQLBindTypes());
-            }
-
-            if ($event->getType() == 'afterQuery') {
-                $profiler->stopProfile();
-            }
-        });
-
-        $dbNames = array_keys($this->getDbConfig());
-        foreach ($dbNames as $name) {
-            \Peanut\Phalcon\Pdo\Mysql::name($name)->setEventsManager($eventsManager);
-        }
     }
 }

@@ -71,14 +71,12 @@ function decode_file($filename)
         case 'yml':
             $result = yaml_parse($contents, true);
             break;
-
         case 'json':
             $result = json_decode($contents, true);
             if (json_last_error()) {
                 throw new \Exception($filename.' Invalid JSON syntax');
             }
             break;
-
         default:
             throw new \Exception($ext.' not support');
             break;

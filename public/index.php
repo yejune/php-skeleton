@@ -7,7 +7,7 @@ try {
     define('__BASE__', dirname(dirname(__FILE__)));
 
     include_once __BASE__.'/vendor/autoload.php';
-    include_once __BASE__.'/app/helpers/function.php';
+    include_once __BASE__.'/app/Helpers/Function.php';
 
     $bootstrap = new Bootstrap(new Di());
     $bootstrap(new Micro())->handle();

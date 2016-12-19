@@ -4,8 +4,6 @@ services:
   mysql:
     container_name: mysql
     image: yejune/mysql
-    volumes:
-      - './var/mysql/skeleton:/var/lib/mysql'
     expose:
       - '3306'
     environment:
@@ -15,17 +13,13 @@ services:
     image: yejune/webserver
     expose:
       - '80'
-    volumes:
-      - '.:/var/www'
-      - './var/log/nginx:/var/log/nginx'
-      - './var/certs:/var/certs'
+    working_dir: /var/www
+    environment:
+      USE_SSL: only
     links:
       - mysql
       - memcached
       - redis
-    working_dir: /var/www
-    environment:
-      USE_SSL: only
   memcached:
     container_name: memcached
     image: jinwoo/memcached:1.4.25
@@ -45,24 +39,26 @@ stages:
   local:
     services:
       mysql:
+        volumes:
+          - './var/mysql:/var/lib/mysql'
         environment:
           MYSQL_URL: 'mysql://user:pass@mysql:3306'
           MYSQL_ROOT_PASSWORD: root
           DOMAIN: mysql.local.com
           INITDB: |
-            CREATE DATABASE IF NOT EXISTS `api`;
-            CREATE DATABASE IF NOT EXISTS `user`;
-            CREATE DATABASE IF NOT EXISTS `pms`;
+            CREATE DATABASE IF NOT EXISTS `WORKSPACE`;
       webserver:
         hostname: local.com
+        volumes:
+          - '.:/var/www'
+          - './var/log/nginx:/var/log/nginx'
+          - './var/certs:/var/certs'
         environment:
           DOMAIN: local.com
           STAGE_NAME: local
           DEBUG: 1
-          DATABASE_URL:
-            api: mysql://root:root@mysql:3306/api
-            user: mysql://root:root@mysql:3306/user
-            pms: mysql://root:root@mysql:3306/pms
+          MASTER_DATABASE_URL: mysql://root:root@mysql:3306/WORKSPACE
+          SLAVE1_DATABASE_URL: mysql://root:root@mysql:3306/WORKSPACE
   production:
     services:
       mysql:
@@ -75,10 +71,8 @@ stages:
           DOMAIN: production.com
           STAGE_NAME: production
           DEBUG: 0
-        environment_from:
-          mysql:
-            - 'MYSQL_URL:MYSQL_MASTER_URL'
-            - 'MYSQL_URL:MYSQL_SLAVE_URL'
+          MASTER_DATABASE_URL: mysql://root:rootroot@dbmaster.ca7pezyjeax2.ap-northeast-2.rds.amazonaws.com:3306/WORKSPACE
+          SLAVE1_DATABASE_URL: mysql://root:rootroot@dbslave1.ca7pezyjeax2.ap-northeast-2.rds.amazonaws.com:3306/WORKSPACE
 tasks:
   composer:
     container: webserver

@@ -1,7 +1,12 @@
 .*
+!.version
 !.gitignore
+!.php_cs
+!.template
 docker-compose*
 composer.lock
 vendor
 var
 test
+*.pem
+*.dab

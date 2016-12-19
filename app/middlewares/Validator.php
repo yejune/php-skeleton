@@ -22,11 +22,10 @@ class Validator extends Middleware
         // validate authorization in header
         } elseif ($this->validator->authorization) {
             $response = $this->validate($this->validator->authorization);
-            if ($response->getjsonContent()['status'] != 200) {
+            if ($response->getJsonContent()['status'] != 200) {
                 $response->send();
 
                 return false;
-            } else {
             }
         }
     }
