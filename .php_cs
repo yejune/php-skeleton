@@ -78,7 +78,6 @@ return PhpCsFixer\Config::create()
         ],
         //        'header_comment'                      => ['header' => $header],
         //        'php_unit_strict' => true,
-        //        'psr4' => true,
         //        'strict_comparison' => true,
         //        'strict_param' => true,
         //'combine_consecutive_unsets'                 => true,

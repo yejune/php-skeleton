@@ -1,25 +1,16 @@
 project_name: skeleton
 stage_name: local
 services:
-  mysql:
-    container_name: mysql
-    image: yejune/mysql
-    expose:
-      - '3306'
-    environment:
-      TZ: Asia/Seoul
   webserver:
     container_name: webserver
-    image: yejune/webserver
+    image: yejune/webserver:7.0.14t
     expose:
       - '80'
     working_dir: /var/www
     environment:
-      USE_SSL: only
-    links:
-      - mysql
-      - memcached
-      - redis
+      USE_SSL: on
+      FPM_LISTEN: /dev/shm/php-fpm.sock
+      FASTCGI_PASS: unix:/dev/shm/php-fpm.sock
   memcached:
     container_name: memcached
     image: jinwoo/memcached:1.4.25
@@ -39,14 +30,19 @@ stages:
   local:
     services:
       mysql:
-        volumes:
-          - './var/mysql:/var/lib/mysql'
+        container_name: mysql
+        image: yejune/mysql
+        expose:
+          - '3306'
         environment:
+          TZ: Asia/Seoul
           MYSQL_URL: 'mysql://user:pass@mysql:3306'
           MYSQL_ROOT_PASSWORD: root
           DOMAIN: mysql.local.com
           INITDB: |
             CREATE DATABASE IF NOT EXISTS `WORKSPACE`;
+        volumes:
+          - './var/mysql:/var/lib/mysql'
       webserver:
         hostname: local.com
         volumes:
@@ -59,13 +55,12 @@ stages:
           DEBUG: 1
           MASTER_DATABASE_URL: mysql://root:root@mysql:3306/WORKSPACE
           SLAVE1_DATABASE_URL: mysql://root:root@mysql:3306/WORKSPACE
+        links:
+          - mysql
+          - memcached
+          - redis
   production:
     services:
-      mysql:
-        environment:
-          MYSQL_URL: 'mysql://user:pass@mysql:3306/apiserver'
-          MYSQL_ROOT_PASSWORD: root
-          DOMAIN: mysql.production.com
       webserver:
         environment:
           DOMAIN: production.com
@@ -73,6 +68,9 @@ stages:
           DEBUG: 0
           MASTER_DATABASE_URL: mysql://root:rootroot@dbmaster.ca7pezyjeax2.ap-northeast-2.rds.amazonaws.com:3306/WORKSPACE
           SLAVE1_DATABASE_URL: mysql://root:rootroot@dbslave1.ca7pezyjeax2.ap-northeast-2.rds.amazonaws.com:3306/WORKSPACE
+      links:
+        - memcached
+        - redis
 tasks:
   composer:
     container: webserver

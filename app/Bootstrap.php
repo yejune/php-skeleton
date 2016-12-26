@@ -8,7 +8,7 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
      */
     public function initialize(\Phalcon\Mvc\Micro $app)
     {
-        $this->initCors();
+        //$this->initCors();
         $this->initDatabase();
         $this->initSession();
         $this->initTemplate();
@@ -32,7 +32,8 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
                 ->setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
                 ->setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Range, Content-Disposition, Content-Type, Authorization')
                 ->setHeader('Access-Control-Allow-Credentials', 'true')
-                ->setStatusCode(200, 'OK')->send();
+                ->setStatusCode(200, 'OK')
+                ->send();
             exit;
         }
 
@@ -197,6 +198,10 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
             $router = new \Peanut\Phalcon\Mvc\Router\Rules\Hash();
             $router->group($routes);
 
+            $router->setUriSource(
+                \Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI
+            );
+
             return $router;
         });
 
@@ -218,8 +223,8 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
         if ($master = getenv('MASTER_DATABASE_URL')) {
             $dbConfig['master'] = $this->dsnParser($master);
         }
-        if ($slave = getenv('SLAVE_DATABASE_URL')) {
-            $dbConfig['slave'] = $this->dsnParser($slave);
+        if ($slave = getenv('SLAVE1_DATABASE_URL')) {
+            $dbConfig['slave1'] = $this->dsnParser($slave);
         }
 
         return $dbConfig;

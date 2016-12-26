@@ -3,6 +3,10 @@
 !.gitignore
 !.php_cs
 !.template
+.version
+.build
+.docker
+!.dockerignore
 docker-compose*
 composer.lock
 vendor

@@ -1,0 +1,14 @@
+var
+*.pem
+docker-compose.*
+Bootfile.yml
+*.dab
+.git
+test
+Dockerfile
+.php_cs
+.gitignore
+.dockerignore
+.docker
+.build
+README.md
