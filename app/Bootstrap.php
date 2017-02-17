@@ -3,17 +3,18 @@ namespace App;
 
 class Bootstrap extends \Peanut\Bootstrap\Yaml
 {
+    public $debug = false;
     /**
      * @param $config
      */
     public function initialize(\Phalcon\Mvc\Micro $app)
     {
-        //$this->initCors();
         $this->initDatabase();
         $this->initSession();
         $this->initTemplate();
         $this->initAuth();
-        //$this->initDebug();
+        $this->initDebug();
+        $this->initCache();
 
         $app->notFound(
             function () use ($app) {
@@ -22,6 +23,26 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
         );
     }
 
+    public function initCache()
+    {
+        $this->di->setShared('cache', function () {
+
+            // Cache data for 2 days
+            $frontCache = new \Phalcon\Cache\Frontend\Data([
+                'lifetime' => 3600,
+            ]);
+
+            // Create the Cache setting redis connection options
+            $cache = new \Phalcon\Cache\Backend\Redis($frontCache, [
+                'host'       => getenv('REDIS_URL'),
+                'port'       => 6379,
+                'persistent' => false,
+                'index'      => 0,
+            ]);
+
+            return $cache;
+        });
+    }
     public function initCors()
     {
         $origin = $this->getDi('request')->getHeader('ORIGIN') ?: '*';
@@ -119,17 +140,24 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
      */
     public function initDatabase()
     {
-        $stageName = $this->stageName;
         $debug     = $this->debug;
-        $dbConfig  = $this->getDbConfig();
 
-        $this->di->setShared('databases', function () use ($dbConfig) {
-            return $dbConfig;
-        });
+        $this->setDiDbConnect('master', getenv('MASTER_DATABASE_URL'));
+        $this->setDiDbConnect('slave1', getenv('SLAVE1_DATABASE_URL'));
 
         if (true === $debug) {
             $this->dbProfiler();
         }
+    }
+
+    public function setDiDbConnect($name, $dsn)
+    {
+        $this->di->setShared(
+            $name,
+            function () use ($name, $dsn) {
+                return \Peanut\Phalcon\Db::connect($name, $dsn);
+            }
+        );
     }
 
     public function initEventsManager()
@@ -172,28 +200,14 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
             }
         });
 
-        $dbNames = array_keys($this->getDbConfig());
-        foreach ($dbNames as $name) {
-            \Peanut\Phalcon\Pdo\Mysql::name($name)->setEventsManager($eventsManager);
-        }
+        $this->di['master']->setEventsManager($eventsManager);
+        $this->di['slave1']->setEventsManager($eventsManager);
     }
 
     protected function initRouter()
     {
-        $routes           = [];
-        $routes['before'] = '\App\Middlewares\Validator->handle';
-        $swagger          = decode_file(__BASE__.'/app/Specs/swagger.json');
-
-        foreach ($swagger['paths'] as $path => $methods) {
-            foreach ($methods as $method => $info) {
-                if (true === isset($info['operationId'])) {
-                    $routes[$method.' '.$path] = $info['operationId'];
-                } else {
-                    throw new \Exception('not found operationId');
-                }
-            }
-        }
-
+        $routes              = $this->getDomainRoutes();
+        //$routes['before']    = '\App\Middlewares\Validator->handle';
         $this->di->setShared('router', function () use ($routes) {
             $router = new \Peanut\Phalcon\Mvc\Router\Rules\Hash();
             $router->group($routes);
@@ -204,6 +218,9 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
 
             return $router;
         });
+        /*
+        $swagger          = decode_file(__BASE__.'/app/Specs/Gateway/V1/swagger.json');
+        pr(memory_get_usage(false));
 
         $this->di->setShared('validator', function () use ($swagger) {
             $validator = new \Peanut\Validator($this);
@@ -212,40 +229,27 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
 
             return $validator;
         });
+        */
     }
 
-    /**
-     * @return array
-     */
-    private function getDbConfig()
+    private function getDomainRoutes()
     {
-        $dbConfig           = [];
-        if ($master = getenv('MASTER_DATABASE_URL')) {
-            $dbConfig['master'] = $this->dsnParser($master);
-        }
-        if ($slave = getenv('SLAVE1_DATABASE_URL')) {
-            $dbConfig['slave1'] = $this->dsnParser($slave);
+        $filename        = __BASE__.'/app/Bootstrap/Routes/global.yml';
+        $global          = [];
+        if (true === file_exists($filename)) {
+            $global = decode_file($filename);
+        } else {
+            die($filename);
         }
 
-        return $dbConfig;
-    }
+        $version         = $this->getDi('request')->getSegment(0);
+        $domainPrefix    = $this->getDi('request')->getSubDomain();
+        $filename        = __BASE__.'/app/Bootstrap/Routes/'.$domainPrefix.'/'.$version.'.yml';
+        $subDomain       = [];
+        if (true === file_exists($filename)) {
+            $subDomain = decode_file($filename);
+        }
 
-    /**
-     * @param $url
-     * @return array
-     */
-    private function dsnParser($url)
-    {
-        $dbSource = parse_url($url);
-        $user     = $dbSource['user'];
-        $password = $dbSource['pass'];
-        $dsn      = $dbSource['scheme'].':host='.$dbSource['host'].
-                    ';dbname='.trim($dbSource['path'], '/').';charset=utf8mb4';
-
-        return [
-            'dsn'      => $dsn,
-            'username' => $user,
-            'password' => $password,
-        ];
+        return array_merge($global, $subDomain);
     }
 }

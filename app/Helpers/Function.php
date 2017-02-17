@@ -32,7 +32,7 @@ function prx($s)
         //' (=> Array|Object)'.PHP_EOL.'\s+\(' => ' $1(',
     ];
 
-    $s = print_r($s, true);
+    $s = htmlentities(print_r($s, true));
     foreach ($a as $key => $val) {
         $s = preg_replace('#'.$key.'#', $val, $s);
     }
@@ -54,9 +54,42 @@ function html_encode($in)
     return $t.'</table>';
 }
 
-function object2array($object)
+function xobject2array($object)
 {
     return json_decode(json_encode($object), true);
+}
+
+function object2array($data, $visited = [])
+{
+    if (!is_array($data) and !is_object($data)) {
+        return $data;
+    }
+    if (is_object($data)) {
+        // Detect object cycles, overwise recursion occurs.
+        $hash = spl_object_hash($data);
+        if (isset($visited[$hash])) {
+            return '** RECURSION **';
+        }
+        $visited[$hash] = true;
+        $data           = (array) $data;
+    }
+    $ret = [];
+    foreach ($data as $key => $value) {
+        if (is_object($value) || is_array($value)) {
+            $value = object2array($value, $visited);
+        }
+        // Remove private and protected properties NULL delimited prefix.
+        if ($key[0] === "\x00") {
+            //$propertyName = substr($key, strpos($key, "\x0", 1));
+
+            $propertyName = substr($key, 3);
+        } else {
+            $propertyName = $key;
+        }
+        $ret[$propertyName] = $value;
+    }
+
+    return $ret;
 }
 
 function decode_file($filename)
@@ -69,12 +102,31 @@ function decode_file($filename)
     switch ($ext) {
         case 'yaml':
         case 'yml':
-            $result = yaml_parse($contents, true);
+            $result = yaml_parse($contents);
             break;
         case 'json':
             $result = json_decode($contents, true);
-            if (json_last_error()) {
-                throw new \Exception($filename.' Invalid JSON syntax');
+            if ($type = json_last_error()) {
+                switch ($type) {
+                    case JSON_ERROR_DEPTH:
+                        $message = 'Maximum stack depth exceeded';
+                    break;
+                    case JSON_ERROR_CTRL_CHAR:
+                        $message = 'Unexpected control character found';
+                    break;
+                    case JSON_ERROR_SYNTAX:
+                        $message = 'Syntax error, malformed JSON';
+                    break;
+                    case JSON_ERROR_NONE:
+                        $message = 'No errors';
+                    break;
+                    case JSON_ERROR_UTF8:
+                        $message = 'Malformed UTF-8 characters';
+                    break;
+                    default:
+                        $message = 'Invalid JSON syntax';
+                }
+                throw new \Exception($filename.' '.$message);
             }
             break;
         default:
@@ -90,4 +142,19 @@ function is_assoc($array)
     $keys = array_keys($array);
 
     return $keys !== array_keys($keys);
+}
+
+function array_merge_recursive_distinct(array &$array1, array &$array2)
+{
+    $merged = $array1;
+
+    foreach ($array2 as $key => &$value) {
+        if (is_array($value) && isset($merged [$key]) && is_array($merged [$key])) {
+            $merged [$key] = array_merge_recursive_distinct($merged [$key], $value);
+        } else {
+            $merged [$key] = $value;
+        }
+    }
+
+    return $merged;
 }

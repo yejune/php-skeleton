@@ -1,5 +1,5 @@
 <?php
-namespace \App\Helpers\Debug;
+namespace App\Helpers\Debug;
 
 register_shutdown_function(function () {
     pr(microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']);
