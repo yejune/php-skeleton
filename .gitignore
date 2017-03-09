@@ -6,7 +6,6 @@
 .version
 .build
 .docker
-!.travis.yml
 !.dockerignore
 docker-compose*
 composer.lock
