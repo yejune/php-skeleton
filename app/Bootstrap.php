@@ -206,30 +206,16 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
 
     protected function initRouter()
     {
-        $routes              = $this->getDomainRoutes();
-        //$routes['before']    = '\App\Middlewares\Validator->handle';
-        $this->di->setShared('router', function () use ($routes) {
+        $this->di->setShared('router', function () {
             $router = new \Peanut\Phalcon\Mvc\Router\Rules\Hash();
-            $router->group($routes);
-
             $router->setUriSource(
                 \Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI
             );
 
             return $router;
         });
-        /*
-        $swagger          = decode_file(__BASE__.'/app/Specs/Gateway/V1/swagger.json');
-        pr(memory_get_usage(false));
-
-        $this->di->setShared('validator', function () use ($swagger) {
-            $validator = new \Peanut\Validator($this);
-            $validator->mode = 'strict';
-            $validator->setSpec($swagger);
-
-            return $validator;
-        });
-        */
+        $routes = $this->getDomainRoutes();
+        $this->getDi('router')->group($routes);
     }
 
     private function getDomainRoutes()

@@ -72,3 +72,6 @@ tasks:
   devtools:
     container: webserver
     cmd: vendor/bin/phalcon.php
+  worker:
+    container: webserver
+    cmd: php public/cli.php
