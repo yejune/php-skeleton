@@ -1,9 +1,9 @@
-project_name: dev
+project_name: development
 stage_name: local
 services:
   webserver:
     container_name: webserver
-    image: yejune/webserver:7.0.16
+    image: yejune/webserver:7.0.17a
     expose:
       - '80'
     working_dir: /var/www
@@ -11,36 +11,17 @@ services:
       USE_SSL: on
       FPM_LISTEN: /dev/shm/php-fpm.sock
       FASTCGI_PASS: unix:/dev/shm/php-fpm.sock
-  redis:
-    container_name: redis
-    image: redis:3.2.8-alpine
-    expose:
-      - '6379'
 stages:
   local:
     services:
-      mysql:
-        container_name: mysql
-        image: yejune/mysql
-        expose:
-          - '3306'
-        environment:
-          TZ: Asia/Seoul
-          MYSQL_URL: 'mysql://user:pass@mysql:3306'
-          MYSQL_ROOT_PASSWORD: root
-          DOMAIN: mysql.dev.com
-          INITDB: |
-            CREATE DATABASE IF NOT EXISTS `dev`;
-        volumes:
-          - './var/mysql:/var/lib/mysql'
       webserver:
-        hostname: dev.com
+        hostname: development.com
         volumes:
           - '.:/var/www'
           - './var/log/nginx:/var/log/nginx'
           - './var/certs:/var/certs'
         environment:
-          DOMAIN: dev.com
+          DOMAIN: development.com
           STAGE_NAME: local
           DEBUG: 1
           MASTER_DATABASE_URL: mysql://root:root@mysql:3306/dev
@@ -50,6 +31,25 @@ stages:
         links:
           - mysql
           - redis
+      redis:
+        container_name: redis
+        image: redis:3.2.8-alpine
+        expose:
+          - '6379'
+      mysql:
+        container_name: mysql
+        image: yejune/mysql
+        expose:
+          - '3306'
+        environment:
+          TZ: Asia/Seoul
+          MYSQL_URL: 'mysql://user:pass@mysql:3306'
+          MYSQL_ROOT_PASSWORD: root
+          DOMAIN: mysql.development.com
+          INITDB: |
+            CREATE DATABASE IF NOT EXISTS `dev`;
+        volumes:
+          - './var/mysql:/var/lib/mysql'
   production:
     services:
       webserver:
