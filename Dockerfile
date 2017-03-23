@@ -1,4 +1,4 @@
-FROM yejune/webserver:7.0.17
+FROM yejune/webserver:7.0.17a
 
 ARG BUILD_NUMBER
 
