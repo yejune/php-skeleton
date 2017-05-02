@@ -3,7 +3,7 @@ stage_name: local
 services:
   webserver:
     container_name: webserver
-    image: yejune/webserver:7.0.17a
+    image: yejune/webserver:7.1.4e
     expose:
       - '80'
     working_dir: /var/www
@@ -21,6 +21,7 @@ stages:
           - './var/log/nginx:/var/log/nginx'
           - './var/certs:/var/certs'
         environment:
+          TZ: Asia/Seoul
           DOMAIN: development.com
           STAGE_NAME: local
           DEBUG: 1
@@ -57,15 +58,17 @@ stages:
           DOMAIN: production.com
           STAGE_NAME: production
           DEBUG: 0
-          MASTER_DATABASE_URL: mysql://root:rootroot@dbmaster.ca7pezyjeax2.ap-northeast-2.rds.amazonaws.com:3306/dev
-          SLAVE1_DATABASE_URL: mysql://root:rootroot@dbslave1.ca7pezyjeax2.ap-northeast-2.rds.amazonaws.com:3306/dev
+          MASTER_DATABASE_URL:
+          SLAVE1_DATABASE_URL:
       links:
-        - memcached
         - redis
 tasks:
   composer:
     container: webserver
     cmd: composer
+  phpunit:
+    container: webserver
+    cmd: phpunit
   phinx:
     container: webserver
     cmd: vendor/bin/phinx

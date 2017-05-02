@@ -64,7 +64,6 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
             ->setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Range, Content-Disposition, Content-Type, Authorization')
             ->setHeader('Access-Control-Allow-Credentials', 'true');
     }
-
     public function initEnvironment()
     {
         $stageName = getenv('STAGE_NAME');
@@ -105,22 +104,22 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
         $stage = $this->getStageName();
         $this->di->setShared('template', function () use ($stage) {
             $tpl = new \Peanut\Template();
-            $tpl->phpengine = true;
-            $tpl->notice = false;
+            $tpl->setPhpEngine(true);
+            $tpl->setNotice(false);
 
             switch ($stage) {
                 case 'production':
-                    $tpl->compileCheck = false;
+                    $tpl->setCompileCheck(false);
                     break;
                 case 'staging':
-                    $tpl->compileCheck = false;
+                    $tpl->setCompileCheck(false);
                     break;
                 default:
-                    $tpl->compileCheck = 'dev';
+                    $tpl->setCompileCheck('dev');
             }
 
-            $tpl->compileRoot  = __BASE__.DIRECTORY_SEPARATOR.'.template';
-            $tpl->templateRoot = __BASE__.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'Views';
+            $tpl->setCompileRoot(__BASE__.'/.template/app/View');
+            $tpl->setTemplateRoot(__BASE__.'/app/Views');
 
             return $tpl;
         });
@@ -140,24 +139,35 @@ class Bootstrap extends \Peanut\Bootstrap\Yaml
      */
     public function initDatabase()
     {
-        $debug     = $this->debug;
+        $debug = $this->debug;
 
-        $this->setDiDbConnect('master', getenv('MASTER_DATABASE_URL'));
-        $this->setDiDbConnect('slave1', getenv('SLAVE1_DATABASE_URL'));
+        $this->setDatabaseConnection('master');
+        $this->setDatabaseConnection('slave1');
 
         if (true === $debug) {
             $this->dbProfiler();
         }
     }
 
-    public function setDiDbConnect($name, $dsn)
+    public function setDatabaseConnection($name)
     {
-        $this->di->setShared(
-            $name,
-            function () use ($name, $dsn) {
-                return \Peanut\Phalcon\Db::connect($name, $dsn);
-            }
-        );
+        if ($dsn = getenv(strtoupper($name).'_DATABASE_URL')) {
+            $this->di->setShared(
+                $name,
+                function () use ($dsn) {
+                    $pdo = new \Peanut\Phalcon\Pdo;
+                    $pdo->setDsn($dsn);
+                    $pdo->setOptions([
+                        \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+                        \PDO::ATTR_EMULATE_PREPARES   => false,
+                        \PDO::ATTR_STRINGIFY_FETCHES  => false,
+                        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                    ]);
+
+                    return $pdo->connect();
+                }
+            );
+        }
     }
 
     public function initEventsManager()

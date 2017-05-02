@@ -3,7 +3,8 @@
 Phalcon Micro Mvc Framework Wrapper.
 
 ### Environment
-macOS, php7, Phalcon 3.0.x, docker.
+
+macOS, php 7.1.x, Phalcon 3.0.x, Docker Toolbox.
 
 ### Require Bootapp
 
